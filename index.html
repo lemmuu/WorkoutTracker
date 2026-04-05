@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0d0d">
+<title>Forge — Workout Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --accent: #c8ff00;
+    --accent-dim: #8ab300;
+    --text: #f0f0f0;
+    --text-muted: #666;
+    --text-sub: #999;
+    --red: #ff4444;
+    --green: #00d68f;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .app-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--accent); }
+  .app-subtitle { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: -2px; }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex; background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 69px; z-index: 99;
+  }
+  .nav-tab {
+    flex: 1; text-align: center; padding: 12px 4px; font-size: 11px;
+    font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-muted); border: none; background: none;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── PAGE ── */
+  .page { display: none; padding: 16px; padding-bottom: 80px; }
+  .page.active { display: block; }
+
+  /* ── DAY CARDS ── */
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .day-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; cursor: pointer;
+    user-select: none;
+  }
+  .day-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 1.5px;
+  }
+  .day-label span { color: var(--accent); margin-right: 6px; }
+  .day-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .day-chevron { color: var(--text-muted); font-size: 18px; transition: transform 0.2s; }
+  .day-card.open .day-chevron { transform: rotate(180deg); }
+  .day-body { display: none; border-top: 1px solid var(--border); }
+  .day-card.open .day-body { display: block; }
+
+  /* ── START WORKOUT BTN ── */
+  .start-btn {
+    display: block; width: calc(100% - 32px); margin: 14px 16px;
+    background: var(--accent); color: #000; border: none;
+    border-radius: var(--radius-sm); padding: 13px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1.5px;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .start-btn:active { opacity: 0.8; }
+
+  /* ── EXERCISE ROW ── */
+  .exercise-row {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .exercise-row:last-child { border-bottom: none; }
+  .exercise-name { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
+  .exercise-note { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4; }
+  .sets-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .set-pill {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 11px;
+    font-size: 12px; color: var(--text-sub); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .set-pill.logged { background: #1a2800; border-color: var(--accent-dim); color: var(--accent); }
+  .set-pill:active { transform: scale(0.96); }
+
+  /* ── LOG MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 200;
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius) var(--radius) 0 0;
+    width: 100%; max-width: 480px;
+    padding: 20px 20px 40px;
+    border-top: 1px solid var(--border);
+  }
+  .modal-handle {
+    width: 40px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 0 auto 18px;
+  }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .input-group { flex: 1; }
+  .input-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 5px; display: block; }
+  .input-field {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    padding: 12px; font-size: 20px; font-family: 'DM Sans', sans-serif;
+    font-weight: 300; text-align: center;
+    -webkit-appearance: none; appearance: none;
+  }
+  .input-field:focus { outline: none; border-color: var(--accent); }
+
+  .modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+  .btn-cancel {
+    flex: 1; padding: 13px; border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+  }
+  .btn-log {
+    flex: 2; padding: 13px; border-radius: var(--radius-sm);
+    background: var(--accent); color: #000; border: none;
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+    letter-spacing: 1px; cursor: pointer;
+  }
+
+  /* ── LAST LOG HINT ── */
+  .last-log {
+    font-size: 11px; color: var(--text-muted); margin-bottom: 14px;
+    padding: 8px 12px; background: var(--surface2); border-radius: var(--radius-sm);
+    border-left: 2px solid var(--accent-dim);
+  }
+
+  /* ── HISTORY PAGE ── */
+  .history-day {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .history-day-header {
+    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+  }
+  .history-date { font-weight: 600; font-size: 14px; }
+  .history-tag {
+    font-size: 11px; background: var(--surface2); border: 1px solid var(--border);
+    padding: 3px 8px; border-radius: 20px; color: var(--text-sub);
+  }
+  .history-body { display: none; border-top: 1px solid var(--border); padding: 10px 16px; }
+  .history-day.open .history-body { display: block; }
+  .history-entry { font-size: 13px; padding: 4px 0; color: var(--text-sub); display: flex; justify-content: space-between; }
+  .history-entry strong { color: var(--text); font-weight: 500; }
+  .history-entry .hw { color: var(--accent); font-weight: 600; font-size: 13px; }
+
+  /* ── PROGRESS PAGE ── */
+  .prog-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px; padding: 16px;
+  }
+  .prog-card-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }
+  .pr-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .pr-item:last-child { border-bottom: none; }
+  .pr-name { font-size: 13px; }
+  .pr-val { font-size: 14px; font-weight: 600; color: var(--accent); }
+  .pr-date { font-size: 11px; color: var(--text-muted); }
+
+  .stat-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .stat-box { flex: 1; background: var(--surface2); border-radius: var(--radius-sm); padding: 14px 12px; text-align: center; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--accent); letter-spacing: 1px; }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* ── PULLUP TRACKER ── */
+  .pullup-section {
+    background: var(--surface);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    padding: 16px; margin-bottom: 12px;
+  }
+  .pullup-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; color: var(--accent); margin-bottom: 8px; }
+  .phase-badge {
+    display: inline-block; background: #1a2800; color: var(--accent);
+    border: 1px solid var(--accent-dim); border-radius: 20px;
+    padding: 4px 12px; font-size: 12px; font-weight: 600; margin-bottom: 10px;
+  }
+  .phase-desc { font-size: 13px; color: var(--text-sub); line-height: 1.5; margin-bottom: 12px; }
+  .pullup-log-row { display: flex; gap: 8px; align-items: center; }
+  .pullup-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); padding: 10px;
+    font-size: 16px; font-family: 'DM Sans', sans-serif; text-align: center;
+    -webkit-appearance: none;
+  }
+  .pullup-input:focus { outline: none; border-color: var(--accent); }
+  .pullup-btn {
+    background: var(--accent); color: #000; border: none;
+    border-radius: var(--radius-sm); padding: 10px 16px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+    letter-spacing: 1px; cursor: pointer; white-space: nowrap;
+  }
+  .pullup-history { margin-top: 12px; }
+  .pullup-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--border); color: var(--text-sub); }
+  .pullup-row:last-child { border-bottom: none; }
+  .pullup-row span:last-child { color: var(--accent); font-weight: 600; }
+
+  /* ── WEEK INDICATOR ── */
+  .week-bar {
+    display: flex; gap: 4px; margin-bottom: 16px;
+  }
+  .week-dot {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--border);
+  }
+  .week-dot.done { background: var(--accent); }
+  .week-dot.current { background: var(--accent-dim); }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+  .empty-state p { font-size: 13px; line-height: 1.5; }
+
+  /* ── ACTIVE WORKOUT ── */
+  .active-banner {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+    background: var(--accent); color: #000;
+    padding: 14px 20px;
+    display: none; align-items: center; justify-content: space-between;
+  }
+  .active-banner.visible { display: flex; }
+  .banner-text { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; }
+  .banner-sub { font-size: 11px; opacity: 0.7; }
+  .banner-end {
+    background: #000; color: var(--accent); border: none;
+    border-radius: var(--radius-sm); padding: 8px 14px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 14px; cursor: pointer;
+  }
+
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 20px; padding: 8px 18px; font-size: 13px;
+    z-index: 300; opacity: 0; transition: all 0.2s; pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <div class="app-title">FORGE</div>
+    <div class="app-subtitle">Training Tracker</div>
+  </div>
+  <div style="text-align:right">
+    <div id="weekLabel" style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Week 1</div>
+    <div id="sessionCount" style="font-size:20px;font-family:'Bebas Neue',sans-serif;color:var(--accent);letter-spacing:1px;">0 Sessions</div>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showPage('today')">Today</button>
+  <button class="nav-tab" onclick="showPage('history')">History</button>
+  <button class="nav-tab" onclick="showPage('progress')">Progress</button>
+</div>
+
+<!-- ══ TODAY PAGE ══ -->
+<div id="page-today" class="page active">
+  <div class="week-bar" id="weekBar"></div>
+
+  <!-- Day A -->
+  <div class="day-card" id="card-A">
+    <div class="day-header" onclick="toggleDay('A')">
+      <div>
+        <div class="day-label"><span>A</span> Push — Chest + Medial Delt</div>
+        <div class="day-meta">6 exercises · ~50 min</div>
+      </div>
+      <div class="day-chevron">⌄</div>
+    </div>
+    <div class="day-body" id="body-A">
+      <button class="start-btn" onclick="startWorkout('A')">▶ START DAY A</button>
+      <div id="exercises-A"></div>
+    </div>
+  </div>
+
+  <!-- Day B -->
+  <div class="day-card" id="card-B">
+    <div class="day-header" onclick="toggleDay('B')">
+      <div>
+        <div class="day-label"><span>B</span> Pull — Lats + Pull-up Prog</div>
+        <div class="day-meta">7 exercises · ~55 min</div>
+      </div>
+      <div class="day-chevron">⌄</div>
+    </div>
+    <div class="day-body" id="body-B">
+      <button class="start-btn" onclick="startWorkout('B')">▶ START DAY B</button>
+      <div id="exercises-B"></div>
+    </div>
+  </div>
+
+  <!-- Day C -->
+  <div class="day-card" id="card-C">
+    <div class="day-header" onclick="toggleDay('C')">
+      <div>
+        <div class="day-label"><span>C</span> Shoulders — Lateral + Post</div>
+        <div class="day-meta">6 exercises · ~55 min</div>
+      </div>
+      <div class="day-chevron">⌄</div>
+    </div>
+    <div class="day-body" id="body-C">
+      <button class="start-btn" onclick="startWorkout('C')">▶ START DAY C</button>
+      <div id="exercises-C"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORY PAGE ══ -->
+<div id="page-history" class="page">
+  <div id="historyList"></div>
+</div>
+
+<!-- ══ PROGRESS PAGE ══ -->
+<div id="page-progress" class="page">
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-label">Total Sessions</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statWeek">0</div>
+      <div class="stat-label">This Week</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" id="statStreak">0</div>
+      <div class="stat-label">Day Streak</div>
+    </div>
+  </div>
+
+  <!-- Pull-up tracker -->
+  <div class="pullup-section">
+    <div class="pullup-title">⬆ PULL-UP PROGRESSION</div>
+    <div id="pullupPhase" class="phase-badge">Phase 1 — Foundation</div>
+    <div id="pullupDesc" class="phase-desc"></div>
+
+    <!-- Next target card -->
+    <div id="pullupTarget" style="background:var(--bg);border:1px solid var(--accent-dim);border-radius:10px;padding:12px;margin-bottom:14px;display:none;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent-dim);margin-bottom:4px;">Next Target</div>
+      <div id="pullupTargetText" style="font-size:13px;color:var(--text);line-height:1.5;"></div>
+    </div>
+
+    <!-- Variation selector -->
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:7px;">Variation</div>
+      <div id="pullupVariations" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+
+    <!-- Value input -->
+    <div id="pullupValueRow" style="margin-bottom:10px;display:none;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:5px;" id="pullupValueLabel">Reps</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" class="pullup-input" id="pullupRepsInput" placeholder="0" min="0" max="300" style="flex:1;">
+        <button class="pullup-btn" onclick="logPullup()">LOG</button>
+      </div>
+    </div>
+
+    <!-- Sets completed (for band/negative) -->
+    <div id="pullupSetsRow" style="margin-bottom:12px;display:none;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:5px;">Sets completed</div>
+      <div style="display:flex;gap:6px;" id="pullupSetPills"></div>
+    </div>
+
+    <!-- Milestone alert -->
+    <div id="pullupMilestone" style="display:none;background:#1a2800;border:1px solid var(--accent);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--accent);line-height:1.5;"></div>
+
+    <!-- History -->
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:6px;">Recent Sessions</div>
+    <div class="pullup-history" id="pullupHistory"></div>
+  </div>
+
+  <!-- PRs -->
+  <div class="prog-card">
+    <div class="prog-card-title">Personal Records</div>
+    <div id="prList"></div>
+  </div>
+</div>
+
+<!-- ══ LOG MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Log Set</div>
+    <div class="modal-sub" id="modalSub">Set 1</div>
+    <div id="lastLogHint"></div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">Weight (kg)</label>
+        <input type="number" class="input-field" id="inputWeight" placeholder="—" step="0.5" min="0">
+      </div>
+      <div class="input-group">
+        <label class="input-label" id="repsLabel">Reps</label>
+        <input type="number" class="input-field" id="inputReps" placeholder="—" min="0">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModalDirect()">Cancel</button>
+      <button class="btn-log" onclick="confirmLog()">LOG SET</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ACTIVE BANNER ══ -->
+<div class="active-banner" id="activeBanner">
+  <div>
+    <div class="banner-text" id="bannerDay">Day A Active</div>
+    <div class="banner-sub" id="bannerProgress">0/0 sets logged</div>
+  </div>
+  <button class="banner-end" onclick="endWorkout()">FINISH</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+const PROGRAM = {
+  A: {
+    name: 'Push — Chest + Medial Delt',
+    exercises: [
+      { id:'A1', name:'Incline DB Press', sets:3, repRange:'8–12', note:'Stepper at 30–45°. Full ROM. Primary chest + ant. delt.', isTime:false },
+      { id:'A2', name:'Incline DB Fly', sets:3, repRange:'10–15', note:'Stretch-focused. Highest ant. delt EMG activation per systematic review.', isTime:false },
+      { id:'A3', name:'DB Lateral Raise', sets:3, repRange:'12–20', note:'Lean forward ~15°. Slow eccentric. Medial delt on push day = 3×/week frequency.', isTime:false },
+      { id:'A4', name:'DB Shoulder Press', sets:3, repRange:'8–12', note:'Seated or standing. Full ROM overhead. Primary overload compound.', isTime:false },
+      { id:'A5', name:'Band Pull-Aparts', sets:2, repRange:'15–20', note:'Rear delt + external rotators. Counterbalances all the pressing.', isTime:false, noWeight:true },
+      { id:'A6', name:'Hollow Body Hold', sets:3, repRange:'20–40s', note:'Lie on back, lower back pressed to floor, arms overhead, legs raised. Core anti-extension.', isTime:true, noWeight:true },
+    ]
+  },
+  B: {
+    name: 'Pull — Lats + Pull-up Progression',
+    exercises: [
+      { id:'B1', name:'Dead Hangs', sets:3, repRange:'20–40s', note:'Depress scapulae at top. Build grip + scapular stability.', isTime:true, noWeight:true },
+      { id:'B2', name:'Scapular Pull-ups', sets:3, repRange:'8–10', note:'From dead hang, depress shoulders WITHOUT bending elbows.', isTime:false, noWeight:true },
+      { id:'B3', name:'Band-Assisted Pull-ups / Negatives', sets:4, repRange:'4–6', note:'Banded: use thick band, progress to thinner. Negatives: 4–5 sec descent.', isTime:false, noWeight:true },
+      { id:'B4', name:'Band Face Pull', sets:3, repRange:'15–20', note:'Loop band on pull-up bar. Rear delt + external rotation. Replaces redundant inverted row.', isTime:false, noWeight:true },
+      { id:'B5', name:'DB Bent-Over Row', sets:3, repRange:'10–12', note:'Elbow close to body. Full stretch at bottom. Superior lat + mid-back stimulus vs inverted row.', isTime:false },
+      { id:'B6', name:'DB Curl', sets:2, repRange:'12–15', note:'Biceps are a limiting factor in pull-up strength.', isTime:false },
+      { id:'B7', name:'Dead Bug', sets:3, repRange:'8–10/side', note:'Lying on back, extend opposite arm + leg slowly while keeping lower back flat. Anti-rotation core.', isTime:false, noWeight:true },
+    ]
+  },
+  C: {
+    name: 'Shoulders — Lateral + Posterior Delt',
+    exercises: [
+      { id:'C1', name:'DB Lateral Raise', sets:4, repRange:'12–20', note:'Lean forward ~15°. Controlled eccentric. Key medial delt exercise.', isTime:false },
+      { id:'C2', name:'Band Lateral Raise', sets:3, repRange:'15–20', note:'Seated or lying side. Ascending resistance curve — different stimulus from DB version.', isTime:false, noWeight:true },
+      { id:'C3', name:'Prone Rear Delt Fly (incline stepper)', sets:4, repRange:'12–15', note:'Stepper at ~30°. Lying prone. Top posterior delt activation per ACE EMG research.', isTime:false },
+      { id:'C4', name:'Arnold Press / DB Overhead Press', sets:3, repRange:'10–12', note:'Progressive overload compound. Primary weekly PR target.', isTime:false },
+      { id:'C5', name:'Band Face Pull', sets:3, repRange:'15–20', note:'Loop band on pull-up bar. External rotation + rear delt. Shoulder health — every session.', isTime:false, noWeight:true },
+      { id:'C6', name:'Hanging Knee Raise', sets:3, repRange:'10–15', note:'From dead hang on pull-up bar. Tuck knees to chest slowly. Core + grip + lat stability.', isTime:false, noWeight:true },
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let state = loadState();
+let activeWorkout = null; // { day, date, logs: {exId: [{set, weight, reps}]} }
+let pendingLog = null; // { exId, setIndex, exObj, dayId }
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('forge_state');
+    return s ? JSON.parse(s) : { workouts: [], pullups: [], startDate: new Date().toISOString() };
+  } catch { return { workouts: [], pullups: [], startDate: new Date().toISOString() }; }
+}
+
+function saveState() {
+  localStorage.setItem('forge_state', JSON.stringify(state));
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function renderAll() {
+  renderExercises();
+  renderWeekBar();
+  renderHeader();
+  renderHistory();
+  renderProgress();
+}
+
+function renderExercises() {
+  ['A','B','C'].forEach(day => {
+    const container = document.getElementById(`exercises-${day}`);
+    const prog = PROGRAM[day];
+    container.innerHTML = prog.exercises.map(ex => {
+      const todayLogs = getTodayExLogs(day, ex.id);
+      const sets = [];
+      for (let i = 0; i < ex.sets; i++) {
+        const logged = todayLogs[i];
+        const label = logged
+          ? (ex.isTime ? `${logged.reps}s` : ex.noWeight ? `${logged.reps}r` : `${logged.weight}kg×${logged.reps}`)
+          : `Set ${i+1}`;
+        sets.push(`<div class="set-pill ${logged ? 'logged' : ''}" onclick="openModal('${day}','${ex.id}',${i})">${label}</div>`);
+      }
+      return `
+        <div class="exercise-row">
+          <div class="exercise-name">${ex.name}</div>
+          <div class="exercise-note">${ex.repRange} reps · ${ex.note}</div>
+          <div class="sets-row">${sets.join('')}</div>
+        </div>`;
+    }).join('');
+  });
+}
+
+function getTodayExLogs(day, exId) {
+  if (!activeWorkout || activeWorkout.day !== day) return {};
+  return activeWorkout.logs[exId] || {};
+}
+
+function renderWeekBar() {
+  const bar = document.getElementById('weekBar');
+  const workoutsPerWeek = 3;
+  const total = state.workouts.length;
+  const weekNum = Math.floor(total / workoutsPerWeek) + 1;
+  const inWeek = total % workoutsPerWeek;
+  bar.innerHTML = Array.from({length: workoutsPerWeek}, (_,i) =>
+    `<div class="week-dot ${i < inWeek ? 'done' : i === inWeek ? 'current' : ''}"></div>`
+  ).join('');
+}
+
+function renderHeader() {
+  const total = state.workouts.length;
+  const weekNum = Math.floor(total / 3) + 1;
+  document.getElementById('weekLabel').textContent = `Week ${weekNum} · Phase ${Math.min(Math.ceil(weekNum/4),3)}`;
+  document.getElementById('sessionCount').textContent = `${total} Session${total !== 1 ? 's' : ''}`;
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (state.workouts.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">🏋</div><p>No sessions yet.<br>Start your first workout!</p></div>`;
+    return;
+  }
+  const sorted = [...state.workouts].reverse();
+  list.innerHTML = sorted.map((w, idx) => {
+    const entries = Object.entries(w.logs).map(([exId, sets]) => {
+      const exDay = exId[0];
+      const ex = PROGRAM[exDay].exercises.find(e => e.id === exId);
+      const setsStr = Object.values(sets).map(s => {
+        if (ex.isTime) return `${s.reps}s`;
+        if (ex.noWeight) return `${s.reps}r`;
+        return `${s.weight}kg×${s.reps}`;
+      }).join(', ');
+      return `<div class="history-entry"><strong>${ex.name}</strong><span class="hw">${setsStr}</span></div>`;
+    }).join('');
+    const d = new Date(w.date);
+    const dateStr = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+    return `
+      <div class="history-day" id="hw${idx}">
+        <div class="history-day-header" onclick="toggleHistory('hw${idx}')">
+          <div>
+            <div class="history-date">${dateStr}</div>
+          </div>
+          <span class="history-tag">Day ${w.day}</span>
+        </div>
+        <div class="history-body">${entries || '<div style="font-size:13px;color:var(--text-muted)">No sets logged</div>'}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderProgress() {
+  const total = state.workouts.length;
+  const now = new Date();
+  const weekAgo = new Date(now - 7*24*60*60*1000);
+  const thisWeek = state.workouts.filter(w => new Date(w.date) >= weekAgo).length;
+
+  // streak
+  let streak = 0;
+  const dates = state.workouts.map(w => new Date(w.date).toDateString());
+  let check = new Date();
+  for (let i = 0; i < 30; i++) {
+    if (dates.includes(check.toDateString())) { streak++; check.setDate(check.getDate()-1); }
+    else if (i === 0) { check.setDate(check.getDate()-1); }
+    else break;
+  }
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statWeek').textContent = thisWeek;
+  document.getElementById('statStreak').textContent = streak;
+
+  // PRs — keyed by best weight per exercise, with % gain vs first logged weight
+  const exHistory = {}; // exId -> [{weight, reps, date}] chronological
+  state.workouts.forEach(w => {
+    Object.entries(w.logs).forEach(([exId, sets]) => {
+      const exDay = exId[0];
+      const ex = PROGRAM[exDay]?.exercises.find(e => e.id === exId);
+      if (!ex || ex.noWeight || ex.isTime) return;
+      Object.values(sets).forEach(s => {
+        if (!s.weight || s.weight <= 0) return;
+        if (!exHistory[exId]) exHistory[exId] = { name: ex.name, entries: [] };
+        exHistory[exId].entries.push({ weight: s.weight, reps: s.reps, date: w.date });
+      });
+    });
+  });
+
+  const prList = document.getElementById('prList');
+  const prEntries = Object.entries(exHistory);
+  if (prEntries.length === 0) {
+    prList.innerHTML = '<div style="font-size:13px;color:var(--text-muted)">Log weighted sets to see PRs</div>';
+  } else {
+    prList.innerHTML = prEntries.map(([exId, data]) => {
+      const entries = data.entries;
+      const best = entries.reduce((a, b) => b.weight > a.weight ? b : a);
+      const first = entries[0];
+      const pctGain = first.weight > 0
+        ? (((best.weight - first.weight) / first.weight) * 100).toFixed(1)
+        : null;
+      const d = new Date(best.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+      const gainLabel = pctGain !== null && parseFloat(pctGain) !== 0
+        ? `<span style="font-size:11px;color:${parseFloat(pctGain)>0?'var(--green)':'var(--red)'}">
+            ${parseFloat(pctGain)>0?'▲':'▼'}${Math.abs(pctGain)}% vs first
+           </span>`
+        : `<span style="font-size:11px;color:var(--text-muted)">First session</span>`;
+      return `<div class="pr-item">
+        <span class="pr-name">${data.name}</span>
+        <div style="text-align:right">
+          <span class="pr-val">${best.weight}kg × ${best.reps}</span><br>
+          ${gainLabel}<br>
+          <span class="pr-date">${d}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Pull-ups
+  renderPullupTracker();
+}
+
+// ── PULL-UP PROGRESSION ENGINE ──────────────────
+// Variations with their progression rules
+const PULLUP_VARIATIONS = [
+  {
+    id: 'dead_hang',
+    label: 'Dead Hang',
+    phase: [1,2,3],
+    unit: 'seconds',
+    unitShort: 's',
+    sets: 3,
+    targetPerSet: 40,
+    milestoneReps: 40,
+    milestoneMsg: '40s dead hang unlocked — your grip and scapular stability are solid. Move to scapular pull-ups as primary.',
+    nextFn: (best) => `Aim for ${Math.min(best + 5, 60)}s holds × 3 sets${best >= 60 ? ' — milestone reached! ✓' : ''}`
+  },
+  {
+    id: 'scapular',
+    label: 'Scapular Pull-up',
+    phase: [1,2,3],
+    unit: 'reps',
+    unitShort: 'r',
+    sets: 3,
+    targetPerSet: 10,
+    milestoneReps: 10,
+    milestoneMsg: '3×10 scapular pull-ups hit — your lat initiation is ready for band-assisted work.',
+    nextFn: (best) => `Aim for ${Math.min(best + 1, 12)} reps × 3 sets — slow and controlled, feel the lat depressing`
+  },
+  {
+    id: 'inverted_row',
+    label: 'Inverted Row',
+    phase: [1,2,3],
+    unit: 'reps',
+    unitShort: 'r',
+    sets: 3,
+    targetPerSet: 12,
+    milestoneReps: 12,
+    milestoneMsg: '3×12 inverted rows done — try elevating feet to increase difficulty.',
+    nextFn: (best) => `Aim for ${Math.min(best + 1, 15)} reps × 3 sets. If at 12+, elevate feet for more challenge.`
+  },
+  {
+    id: 'band_thick',
+    label: 'Band — Thick',
+    phase: [1,2],
+    unit: 'reps',
+    unitShort: 'r',
+    sets: 3,
+    targetPerSet: 8,
+    milestoneReps: 8,
+    milestoneMsg: '3×8 with thick band — time to drop to medium band. That\'s real progress.',
+    nextFn: (best) => best >= 8
+      ? '✓ Milestone hit — switch to Medium Band next session!'
+      : `Aim for ${best + 1} reps × 3 sets. At 3×8, you graduate to medium band.`
+  },
+  {
+    id: 'band_medium',
+    label: 'Band — Medium',
+    phase: [2,3],
+    unit: 'reps',
+    unitShort: 'r',
+    sets: 3,
+    targetPerSet: 8,
+    milestoneReps: 8,
+    milestoneMsg: '3×8 with medium band — drop to thin/light band or single-leg assist next.',
+    nextFn: (best) => best >= 8
+      ? '✓ Milestone hit — switch to Thin Band or single-leg next session!'
+      : `Aim for ${best + 1} reps × 3 sets. At 3×8, you move to thin band.`
+  },
+  {
+    id: 'band_thin',
+    label: 'Band — Thin',
+    phase: [3],
+    unit: 'reps',
+    unitShort: 'r',
+    sets: 3,
+    targetPerSet: 8,
+    milestoneReps: 8,
+    milestoneMsg: '3×8 thin band — attempt unassisted pull-ups at the start of next session when fresh!',
+    nextFn: (best) => best >= 8
+      ? '✓ Ready to attempt unassisted! Try 1–2 reps fresh next session.'
+      : `Aim for ${best + 1} reps × 3 sets. At 3×8, attempt unassisted.`
+  },
+  {
+    id: 'negative',
+    label: 'Negative (eccentric)',
+    phase: [2,3],
+    unit: 'seconds',
+    unitShort: 's',
+    sets: 4,
+    targetPerSet: 5,
+    milestoneReps: 5,
+    milestoneMsg: '5-second negatives consistently — your pulling strength is near unassisted level.',
+    nextFn: (best) => {
+      if (best < 3) return `Aim for 3s descent × 4 sets. Jump or step to top, lower slowly.`;
+      if (best < 5) return `Aim for ${best + 1}s descent × 4 sets — control is everything here.`;
+      return '✓ 5s negatives mastered — you\'re ready for unassisted attempts!';
+    }
+  },
+  {
+    id: 'unassisted',
+    label: 'Unassisted Pull-up',
+    phase: [3],
+    unit: 'reps',
+    unitShort: 'r',
+    sets: 3,
+    targetPerSet: null,
+    milestoneReps: 5,
+    milestoneMsg: '5 clean unassisted reps — you\'ve hit the program goal. Now build sets.',
+    nextFn: (best) => {
+      if (best === 0) return 'First attempt — aim for 1 clean rep. Jump, dead hang, pull.';
+      if (best < 3) return `${best} reps last time — aim for ${best + 1}. Every rep counts.`;
+      if (best < 5) return `${best} reps — goal is 3×5. Add sets, not just reps.`;
+      return `${best} reps PR — target 3 sets of ${best}. Then add reps or sets.`;
+    }
+  }
+];
+
+let selectedPullupVariation = null;
+let selectedPullupSets = 0;
+
+function getBestForVariation(varId) {
+  const entries = (state.pullups || []).filter(p => p.variationId === varId);
+  if (!entries.length) return 0;
+  return Math.max(...entries.map(p => p.value));
+}
+
+function getLastForVariation(varId) {
+  const entries = (state.pullups || []).filter(p => p.variationId === varId);
+  if (!entries.length) return null;
+  return entries[entries.length - 1];
+}
+
+function detectPhase() {
+  const total = state.workouts.length;
+  const week = Math.floor(total / 3) + 1;
+  if (week <= 4) return 1;
+  if (week <= 8) return 2;
+  return 3;
+}
+
+function renderPullupTracker() {
+  const phase = detectPhase();
+  const week = Math.floor(state.workouts.length / 3) + 1;
+
+  const phaseNames = { 1:'Phase 1 — Foundation (Wk 1–4)', 2:'Phase 2 — Build (Wk 5–8)', 3:'Phase 3 — Unassisted (Wk 9–12)' };
+  const phaseDescs = {
+    1: 'Build grip strength and lat initiation. Focus: dead hangs, scapular pull-ups, inverted rows, thick band.',
+    2: 'Add eccentric loading. Introduce negatives with 4–5s descent. Progress band thickness.',
+    3: 'Attempt unassisted reps when fresh. Thin band as backup. 5-sec negatives for strength.'
+  };
+  document.getElementById('pullupPhase').textContent = phaseNames[phase];
+  document.getElementById('pullupDesc').textContent = phaseDescs[phase];
+
+  // Variation chips — show all phases up to current
+  const availableVars = PULLUP_VARIATIONS.filter(v => v.phase.includes(phase) || v.phase.some(p => p < phase));
+  const varContainer = document.getElementById('pullupVariations');
+  varContainer.innerHTML = availableVars.map(v => {
+    const best = getBestForVariation(v.id);
+    const isSelected = selectedPullupVariation === v.id;
+    const achieved = best >= v.milestoneReps;
+    return `<button onclick="selectPullupVariation('${v.id}')"
+      style="padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+      border:1px solid ${isSelected ? 'var(--accent)' : achieved ? 'var(--accent-dim)' : 'var(--border)'};
+      background:${isSelected ? 'var(--accent)' : achieved ? '#1a2800' : 'var(--surface2)'};
+      color:${isSelected ? '#000' : achieved ? 'var(--accent-dim)' : 'var(--text-sub)'};
+      white-space:nowrap;">
+      ${achieved ? '✓ ' : ''}${v.label}${best > 0 ? ` <span style="opacity:0.7">${best}${v.unitShort}</span>` : ''}
+    </button>`;
+  }).join('');
+
+  // Target card
+  if (selectedPullupVariation) {
+    const varDef = PULLUP_VARIATIONS.find(v => v.id === selectedPullupVariation);
+    const best = getBestForVariation(selectedPullupVariation);
+    const last = getLastForVariation(selectedPullupVariation);
+    const targetEl = document.getElementById('pullupTarget');
+    const targetText = document.getElementById('pullupTargetText');
+    targetEl.style.display = 'block';
+    let html = varDef.nextFn(best);
+    if (last) {
+      const lastDate = new Date(last.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+      html += `<br><span style="color:var(--text-muted);font-size:11px;">Last logged: ${last.value}${varDef.unitShort} on ${lastDate}</span>`;
+    }
+    targetText.innerHTML = html;
+
+    // Input
+    document.getElementById('pullupValueRow').style.display = 'block';
+    document.getElementById('pullupValueLabel').textContent = varDef.unit === 'seconds' ? 'Seconds (best of the set)' : 'Reps (best set)';
+
+    // Sets pills
+    const setsRow = document.getElementById('pullupSetsRow');
+    const pillsEl = document.getElementById('pullupSetPills');
+    setsRow.style.display = 'block';
+    pillsEl.innerHTML = Array.from({length: varDef.sets}, (_,i) => {
+      const active = selectedPullupSets > i;
+      return `<div onclick="togglePullupSet(${i+1})"
+        style="padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+        border:1px solid ${active ? 'var(--accent-dim)' : 'var(--border)'};
+        background:${active ? '#1a2800' : 'var(--surface2)'};
+        color:${active ? 'var(--accent)' : 'var(--text-muted)'};">
+        Set ${i+1}
+      </div>`;
+    }).join('');
+  } else {
+    document.getElementById('pullupTarget').style.display = 'none';
+    document.getElementById('pullupValueRow').style.display = 'none';
+    document.getElementById('pullupSetsRow').style.display = 'none';
+  }
+
+  // Milestone check
+  checkPullupMilestone();
+
+  // History
+  const hist = document.getElementById('pullupHistory');
+  const allEntries = (state.pullups || []);
+  if (allEntries.length === 0) {
+    hist.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">No entries yet — select a variation above</div>';
+    return;
+  }
+  const recent = [...allEntries].reverse().slice(0, 10);
+  hist.innerHTML = recent.map(p => {
+    const varDef = PULLUP_VARIATIONS.find(v => v.id === p.variationId);
+    const d = new Date(p.date).toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+    const unitShort = varDef ? varDef.unitShort : 'r';
+    const setsStr = p.sets ? ` · ${p.sets} sets` : '';
+    return `<div class="pullup-row">
+      <span>${d} · <strong style="color:var(--text)">${varDef ? varDef.label : p.variationId}</strong>${setsStr}</span>
+      <span>${p.value}${unitShort}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectPullupVariation(id) {
+  selectedPullupVariation = selectedPullupVariation === id ? null : id;
+  selectedPullupSets = 0;
+  document.getElementById('pullupRepsInput').value = '';
+  renderPullupTracker();
+}
+
+function togglePullupSet(n) {
+  selectedPullupSets = selectedPullupSets === n ? n - 1 : n;
+  renderPullupTracker();
+}
+
+function checkPullupMilestone() {
+  const el = document.getElementById('pullupMilestone');
+  if (!selectedPullupVariation) { el.style.display = 'none'; return; }
+  const varDef = PULLUP_VARIATIONS.find(v => v.id === selectedPullupVariation);
+  const best = getBestForVariation(selectedPullupVariation);
+
+  // Check if milestone just crossed (best >= target AND only 1-2 sessions at this level)
+  const atLevel = (state.pullups || []).filter(p => p.variationId === selectedPullupVariation && p.value >= varDef.milestoneReps);
+  if (atLevel.length >= 1 && atLevel.length <= 3) {
+    el.style.display = 'block';
+    el.innerHTML = `🏆 ${varDef.milestoneMsg}`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  WORKOUT CONTROL
+// ══════════════════════════════════════════════
+function startWorkout(day) {
+  if (activeWorkout) {
+    if (!confirm(`You have an active Day ${activeWorkout.day} workout. Finish it first?`)) return;
+    endWorkout();
+  }
+  activeWorkout = { day, date: new Date().toISOString(), logs: {} };
+  document.getElementById('activeBanner').classList.add('visible');
+  document.getElementById('bannerDay').textContent = `Day ${day} Active`;
+  updateBanner();
+  showToast(`Day ${day} started — let's go!`);
+  renderExercises();
+}
+
+function endWorkout() {
+  if (!activeWorkout) return;
+  const hasLogs = Object.keys(activeWorkout.logs).length > 0;
+  if (!hasLogs && !confirm('No sets logged. Save anyway?')) return;
+  state.workouts.push({ ...activeWorkout });
+  saveState();
+  activeWorkout = null;
+  document.getElementById('activeBanner').classList.remove('visible');
+  showToast('Session saved! 💪');
+  renderAll();
+}
+
+function updateBanner() {
+  if (!activeWorkout) return;
+  const prog = PROGRAM[activeWorkout.day];
+  const totalSets = prog.exercises.reduce((s, e) => s + e.sets, 0);
+  const loggedSets = Object.values(activeWorkout.logs).reduce((s, ex) => s + Object.keys(ex).length, 0);
+  document.getElementById('bannerProgress').textContent = `${loggedSets}/${totalSets} sets logged`;
+}
+
+// ══════════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════════
+function openModal(dayId, exId, setIndex) {
+  if (!activeWorkout || activeWorkout.day !== dayId) {
+    showToast(`Start Day ${dayId} first`); return;
+  }
+  const ex = PROGRAM[dayId].exercises.find(e => e.id === exId);
+  pendingLog = { exId, setIndex, ex, dayId };
+
+  document.getElementById('modalTitle').textContent = ex.name;
+  document.getElementById('modalSub').textContent = `Set ${setIndex + 1} of ${ex.sets}`;
+
+  const weightInput = document.getElementById('inputWeight');
+  const repsInput = document.getElementById('inputReps');
+  const repsLabel = document.getElementById('repsLabel');
+
+  if (ex.isTime) {
+    repsLabel.textContent = 'Seconds';
+    weightInput.parentElement.style.display = 'none';
+  } else if (ex.noWeight) {
+    repsLabel.textContent = 'Reps';
+    weightInput.parentElement.style.display = 'none';
+  } else {
+    repsLabel.textContent = 'Reps';
+    weightInput.parentElement.style.display = '';
+  }
+
+  // Last log hint with % overload suggestion
+  const hint = document.getElementById('lastLogHint');
+  const lastSession = findLastLog(exId);
+  const prevSession = findPrevLog(exId); // session before last
+  if (lastSession) {
+    const vals = Object.values(lastSession);
+    if (vals.length > 0) {
+      const last = vals[0];
+      if (ex.isTime) {
+        hint.innerHTML = `<div class="last-log">⏱ Last: ${last.reps}s — aim for ${last.reps + 5}s</div>`;
+      } else if (ex.noWeight) {
+        hint.innerHTML = `<div class="last-log">📈 Last: ${last.reps} reps — aim for ${last.reps + 1}</div>`;
+      } else {
+        // Calculate % gain vs session before that (if exists)
+        let trendHtml = '';
+        if (prevSession) {
+          const prevVals = Object.values(prevSession);
+          if (prevVals.length > 0) {
+            const prev = prevVals[0];
+            if (prev.weight > 0 && last.weight > 0) {
+              const pct = (((last.weight - prev.weight) / prev.weight) * 100).toFixed(1);
+              const arrow = parseFloat(pct) >= 0 ? '▲' : '▼';
+              const col = parseFloat(pct) >= 0 ? 'var(--green)' : 'var(--red)';
+              trendHtml = ` <span style="color:${col};font-weight:600">${arrow}${Math.abs(pct)}%</span>`;
+            }
+          }
+        }
+        // Suggest next weight: +2.5% rounded to nearest 0.5kg
+        const suggested = Math.round((last.weight * 1.025) / 0.5) * 0.5;
+        hint.innerHTML = `<div class="last-log">
+          📈 Last: <strong>${last.weight}kg × ${last.reps}</strong>${trendHtml}<br>
+          <span style="color:var(--accent-dim)">Target: ${suggested}kg (+2.5%) or +1 rep at same weight</span>
+        </div>`;
+      }
+    } else hint.innerHTML = '';
+  } else hint.innerHTML = '';
+
+  // Pre-fill current set if already logged
+  const cur = activeWorkout.logs[exId]?.[setIndex];
+  weightInput.value = cur?.weight || '';
+  repsInput.value = cur?.reps || '';
+
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => repsInput.focus(), 100);
+}
+
+function findLastLog(exId) {
+  for (let i = state.workouts.length - 1; i >= 0; i--) {
+    if (state.workouts[i].logs[exId]) return state.workouts[i].logs[exId];
+  }
+  return null;
+}
+
+function findPrevLog(exId) {
+  let found = false;
+  for (let i = state.workouts.length - 1; i >= 0; i--) {
+    if (state.workouts[i].logs[exId]) {
+      if (found) return state.workouts[i].logs[exId];
+      found = true;
+    }
+  }
+  return null;
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  pendingLog = null;
+}
+
+function confirmLog() {
+  if (!pendingLog) return;
+  const { exId, setIndex, ex, dayId } = pendingLog;
+  const weight = parseFloat(document.getElementById('inputWeight').value) || 0;
+  const reps = parseInt(document.getElementById('inputReps').value) || 0;
+  if (reps === 0) { showToast('Enter reps or seconds'); return; }
+
+  if (!activeWorkout.logs[exId]) activeWorkout.logs[exId] = {};
+  activeWorkout.logs[exId][setIndex] = { set: setIndex+1, weight, reps };
+
+  closeModalDirect();
+  updateBanner();
+  renderExercises();
+  showToast(`Set ${setIndex+1} logged ✓`);
+}
+
+// ══════════════════════════════════════════════
+//  PULL-UP LOG
+// ══════════════════════════════════════════════
+function logPullup() {
+  if (!selectedPullupVariation) { showToast('Select a variation first'); return; }
+  const val = parseInt(document.getElementById('pullupRepsInput').value);
+  if (!val || val <= 0) { showToast('Enter a value'); return; }
+  const varDef = PULLUP_VARIATIONS.find(v => v.id === selectedPullupVariation);
+  const sets = selectedPullupSets || 1;
+
+  if (!state.pullups) state.pullups = [];
+  state.pullups.push({
+    date: new Date().toISOString(),
+    variationId: selectedPullupVariation,
+    value: val,
+    sets: sets
+  });
+  saveState();
+
+  document.getElementById('pullupRepsInput').value = '';
+  selectedPullupSets = 0;
+
+  const best = getBestForVariation(selectedPullupVariation);
+  const isNewBest = val >= best;
+  showToast(isNewBest ? `New best! ${val}${varDef.unitShort} ✓` : `Logged ${val}${varDef.unitShort} ✓`);
+  renderPullupTracker();
+}
+
+// ══════════════════════════════════════════════
+//  UI UTILS
+// ══════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`page-${id}`).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'progress') renderProgress();
+  if (id === 'history') renderHistory();
+}
+
+function toggleDay(day) {
+  const card = document.getElementById(`card-${day}`);
+  card.classList.toggle('open');
+}
+
+function toggleHistory(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+renderAll();
+</script>
+</body>
+</html>
