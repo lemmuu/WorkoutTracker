@@ -317,8 +317,8 @@
   <div class="day-card" id="card-A">
     <div class="day-header" onclick="toggleDay('A')">
       <div>
-        <div class="day-label"><span>A</span> Push — Chest + Ant. Delt</div>
-        <div class="day-meta">5 exercises · ~50 min</div>
+        <div class="day-label"><span>A</span> Push — Chest + Medial Delt</div>
+        <div class="day-meta">6 exercises · ~50 min</div>
       </div>
       <div class="day-chevron">⌄</div>
     </div>
@@ -333,7 +333,7 @@
     <div class="day-header" onclick="toggleDay('B')">
       <div>
         <div class="day-label"><span>B</span> Pull — Lats + Pull-up Prog</div>
-        <div class="day-meta">6 exercises · ~50 min</div>
+        <div class="day-meta">7 exercises · ~55 min</div>
       </div>
       <div class="day-chevron">⌄</div>
     </div>
@@ -348,7 +348,7 @@
     <div class="day-header" onclick="toggleDay('C')">
       <div>
         <div class="day-label"><span>C</span> Shoulders — Lateral + Post</div>
-        <div class="day-meta">5 exercises · ~50 min</div>
+        <div class="day-meta">6 exercises · ~55 min</div>
       </div>
       <div class="day-chevron">⌄</div>
     </div>
@@ -470,13 +470,14 @@
 // ══════════════════════════════════════════════
 const PROGRAM = {
   A: {
-    name: 'Push — Chest + Anterior Delt',
+    name: 'Push — Chest + Medial Delt',
     exercises: [
       { id:'A1', name:'Incline DB Press', sets:3, repRange:'8–12', note:'Stepper at 30–45°. Full ROM. Primary chest + ant. delt.', isTime:false },
-      { id:'A2', name:'Incline DB Fly', sets:3, repRange:'10–15', note:'Stretch-focused. Highest ant. delt activation per EMG.', isTime:false },
-      { id:'A3', name:'Decline Push-ups (feet elevated)', sets:2, repRange:'max', note:'Stop 1–2 reps shy of failure. Bodyweight — log reps only.', isTime:false, noWeight:true },
-      { id:'A4', name:'DB Shoulder Press', sets:3, repRange:'8–12', note:'Seated or standing. Full ROM overhead.', isTime:false },
-      { id:'A5', name:'Band Pull-Aparts', sets:2, repRange:'15–20', note:'Rear delt + external rotators. Injury prevention.', isTime:false, noWeight:true },
+      { id:'A2', name:'Incline DB Fly', sets:3, repRange:'10–15', note:'Stretch-focused. Highest ant. delt EMG activation per systematic review.', isTime:false },
+      { id:'A3', name:'DB Lateral Raise', sets:3, repRange:'12–20', note:'Lean forward ~15°. Slow eccentric. Medial delt on push day = 3×/week frequency.', isTime:false },
+      { id:'A4', name:'DB Shoulder Press', sets:3, repRange:'8–12', note:'Seated or standing. Full ROM overhead. Primary overload compound.', isTime:false },
+      { id:'A5', name:'Band Pull-Aparts', sets:2, repRange:'15–20', note:'Rear delt + external rotators. Counterbalances all the pressing.', isTime:false, noWeight:true },
+      { id:'A6', name:'Hollow Body Hold', sets:3, repRange:'20–40s', note:'Lie on back, lower back pressed to floor, arms overhead, legs raised. Core anti-extension.', isTime:true, noWeight:true },
     ]
   },
   B: {
@@ -485,19 +486,21 @@ const PROGRAM = {
       { id:'B1', name:'Dead Hangs', sets:3, repRange:'20–40s', note:'Depress scapulae at top. Build grip + scapular stability.', isTime:true, noWeight:true },
       { id:'B2', name:'Scapular Pull-ups', sets:3, repRange:'8–10', note:'From dead hang, depress shoulders WITHOUT bending elbows.', isTime:false, noWeight:true },
       { id:'B3', name:'Band-Assisted Pull-ups / Negatives', sets:4, repRange:'4–6', note:'Banded: use thick band, progress to thinner. Negatives: 4–5 sec descent.', isTime:false, noWeight:true },
-      { id:'B4', name:'Inverted Row', sets:3, repRange:'8–12', note:'Under table or low bar. Feet elevated = harder.', isTime:false, noWeight:true },
-      { id:'B5', name:'DB Bent-Over Row', sets:3, repRange:'10–12', note:'Elbow close to body. Full stretch at bottom. Lats + mid-back.', isTime:false },
+      { id:'B4', name:'Band Face Pull', sets:3, repRange:'15–20', note:'Loop band on pull-up bar. Rear delt + external rotation. Replaces redundant inverted row.', isTime:false, noWeight:true },
+      { id:'B5', name:'DB Bent-Over Row', sets:3, repRange:'10–12', note:'Elbow close to body. Full stretch at bottom. Superior lat + mid-back stimulus vs inverted row.', isTime:false },
       { id:'B6', name:'DB Curl', sets:2, repRange:'12–15', note:'Biceps are a limiting factor in pull-up strength.', isTime:false },
+      { id:'B7', name:'Dead Bug', sets:3, repRange:'8–10/side', note:'Lying on back, extend opposite arm + leg slowly while keeping lower back flat. Anti-rotation core.', isTime:false, noWeight:true },
     ]
   },
   C: {
     name: 'Shoulders — Lateral + Posterior Delt',
     exercises: [
-      { id:'C1', name:'DB Lateral Raise', sets:4, repRange:'12–20', note:'Lean forward ~15°. Controlled eccentric. Key side delt exercise.', isTime:false },
-      { id:'C2', name:'Band Lateral Raise', sets:3, repRange:'15–20', note:'Seated or lying side. Different resistance curve from DB version.', isTime:false, noWeight:true },
-      { id:'C3', name:'Prone Rear Delt Fly (incline stepper)', sets:4, repRange:'12–15', note:'Stepper at ~30°. Lying prone. Top posterior delt activation per ACE research.', isTime:false },
-      { id:'C4', name:'Arnold Press / DB Overhead Press', sets:3, repRange:'10–12', note:'Progressive overload compound. Log weekly PR.', isTime:false },
-      { id:'C5', name:'Band Face Pull', sets:3, repRange:'15–20', note:'Loop band on pull-up bar. External rotation + rear delt. Shoulder health.', isTime:false, noWeight:true },
+      { id:'C1', name:'DB Lateral Raise', sets:4, repRange:'12–20', note:'Lean forward ~15°. Controlled eccentric. Key medial delt exercise.', isTime:false },
+      { id:'C2', name:'Band Lateral Raise', sets:3, repRange:'15–20', note:'Seated or lying side. Ascending resistance curve — different stimulus from DB version.', isTime:false, noWeight:true },
+      { id:'C3', name:'Prone Rear Delt Fly (incline stepper)', sets:4, repRange:'12–15', note:'Stepper at ~30°. Lying prone. Top posterior delt activation per ACE EMG research.', isTime:false },
+      { id:'C4', name:'Arnold Press / DB Overhead Press', sets:3, repRange:'10–12', note:'Progressive overload compound. Primary weekly PR target.', isTime:false },
+      { id:'C5', name:'Band Face Pull', sets:3, repRange:'15–20', note:'Loop band on pull-up bar. External rotation + rear delt. Shoulder health — every session.', isTime:false, noWeight:true },
+      { id:'C6', name:'Hanging Knee Raise', sets:3, repRange:'10–15', note:'From dead hang on pull-up bar. Tuck knees to chest slowly. Core + grip + lat stability.', isTime:false, noWeight:true },
     ]
   }
 };
